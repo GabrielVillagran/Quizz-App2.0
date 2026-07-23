@@ -1,4 +1,4 @@
-import './App.css'
+import "./App.css";
 
 function App() {
   return (
@@ -14,30 +14,19 @@ function App() {
       </header>
 
       <main className="app__main">
-        <section
-          className="hero"
-          aria-labelledby="hero-title"
-        >
-          <p className="hero__eyebrow">
-            Learn through practice
-          </p>
+        <section className="hero" aria-labelledby="hero-title">
+          <p className="hero__eyebrow">Learn through practice</p>
 
-          <h1
-            className="hero__title"
-            id="hero-title"
-          >
+          <h1 className="hero__title" id="hero-title">
             Turn your study notes into interactive quizzes
           </h1>
 
           <p className="hero__description">
-            Generate personalized quizzes, test your knowledge,
-            and compete against your previous scores.
+            Generate personalized quizzes, test your knowledge, and compete
+            against your previous scores.
           </p>
 
-          <button
-            className="hero__action"
-            type="button"
-          >
+          <button className="hero__action" type="button">
             Create a quiz
           </button>
         </section>
