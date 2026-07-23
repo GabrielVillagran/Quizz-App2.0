@@ -5,7 +5,12 @@
   "scripts": {
     "dev:web": "npm run dev --workspace @quiz-learning-platform/web",
     "build:web": "npm run build --workspace @quiz-learning-platform/web",
-    "lint:web": "npm run lint --workspace @quiz-learning-platform/web"
+    "lint:web": "npm run lint --workspace @quiz-learning-platform/web",
+    "test:web": "npm run test --workspace @quiz-learning-platform/web",
+    "typecheck:web": "npm run typecheck --workspace @quiz-learning-platform/web",
+    "quality:web": "npm run format:check && npm run lint:web && npm run typecheck:web && npm run test:web && npm run build:web",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
   },
   "keywords": [],
   "author": "",
@@ -18,5 +23,8 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "devDependencies": {
+    "prettier": "^3.9.6"
+  }
 }
