@@ -1,0 +1,22 @@
+{
+  "name": "quiz-learning-platform",
+  "version": "1.0.0",
+  "description": "AI-powered quiz learning platform",
+  "scripts": {
+    "dev:web": "npm run dev --workspace @quiz-learning-platform/web",
+    "build:web": "npm run build --workspace @quiz-learning-platform/web",
+    "lint:web": "npm run lint --workspace @quiz-learning-platform/web"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "private": true,
+  "packageManager": "npm@11.16.0",
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
