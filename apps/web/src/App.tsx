@@ -1,35 +1,46 @@
+import { useState } from "react";
+
+import { mockScores } from "./features/scores/mockScores";
+import AppHeader from "./components/AppHeader";
+import HomeScreen from "./features/home/HomeScreen";
+import QuizConfigurationPanel from "./features/quiz-generation/QuizConfigurationPanel";
+import type { QuizConfiguration } from "./features/quiz-generation/quizConfiguration.types";
+
 import "./App.css";
 
 function App() {
+  const [isQuizConfigurationOpen, setIsQuizConfigurationOpen] = useState(false);
+
+  function handleOpenQuizConfiguration(): void {
+    setIsQuizConfigurationOpen(true);
+  }
+
+  function handleCloseQuizConfiguration(): void {
+    setIsQuizConfigurationOpen(false);
+  }
+
+  function handleQuizConfigurationSubmit(
+    configuration: QuizConfiguration,
+  ): void {
+    console.info("Quiz configuration submitted:", configuration);
+  }
+
   return (
     <div className="app">
-      <header className="app__header">
-        <a
-          className="app__brand"
-          href="/"
-          aria-label="Quiz Learning Platform home"
-        >
-          Quiz Learning Platform
-        </a>
-      </header>
+      <AppHeader />
 
       <main className="app__main">
-        <section className="hero" aria-labelledby="hero-title">
-          <p className="hero__eyebrow">Learn through practice</p>
-
-          <h1 className="hero__title" id="hero-title">
-            Turn your study notes into interactive quizzes
-          </h1>
-
-          <p className="hero__description">
-            Generate personalized quizzes, test your knowledge, and compete
-            against your previous scores.
-          </p>
-
-          <button className="hero__action" type="button">
-            Create a quiz
-          </button>
-        </section>
+        {isQuizConfigurationOpen ? (
+          <QuizConfigurationPanel
+            onClose={handleCloseQuizConfiguration}
+            onSubmit={handleQuizConfigurationSubmit}
+          />
+        ) : (
+          <HomeScreen
+            scores={mockScores}
+            onCreateQuiz={handleOpenQuizConfiguration}
+          />
+        )}
       </main>
     </div>
   );
