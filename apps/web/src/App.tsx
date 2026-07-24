@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { mockScores } from "./features/scores/mockScores";
 import AppHeader from "./components/AppHeader";
 import HomeScreen from "./features/home/HomeScreen";
 import QuizConfigurationPanel from "./features/quiz-generation/QuizConfigurationPanel";
@@ -35,7 +36,10 @@ function App() {
             onSubmit={handleQuizConfigurationSubmit}
           />
         ) : (
-          <HomeScreen onCreateQuiz={handleOpenQuizConfiguration} />
+          <HomeScreen
+            scores={mockScores}
+            onCreateQuiz={handleOpenQuizConfiguration}
+          />
         )}
       </main>
     </div>

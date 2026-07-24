@@ -1,17 +1,18 @@
+import type { QuizScore } from "../scores/quizScore.types";
 import ScoreBoard from "../scores/ScoreBoard";
-import { mockScores } from "../scores/mockScores";
 import HeroSection from "./HeroSection";
 
 interface HomeScreenProps {
+  scores: QuizScore[];
   onCreateQuiz: () => void;
 }
 
-function HomeScreen({ onCreateQuiz }: HomeScreenProps) {
+function HomeScreen({ scores, onCreateQuiz }: HomeScreenProps) {
   return (
     <div className="home-screen">
       <HeroSection onCreateQuiz={onCreateQuiz} />
 
-      <ScoreBoard scores={mockScores} />
+      <ScoreBoard scores={scores} />
     </div>
   );
 }

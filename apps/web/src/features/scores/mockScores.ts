@@ -25,4 +25,12 @@ export const mockScores: QuizScore[] = [
     totalQuestions: 10,
     completedAt: "2026-07-18T12:00:00.000Z",
   },
+  {
+    id: "score-4",
+    quizTitle: "Advanced Python",
+    difficulty: "advanced",
+    correctAnswers: 8,
+    totalQuestions: 10,
+    completedAt: "2026-07-15T12:00:00.000Z",
+  },
 ];
