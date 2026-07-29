@@ -137,10 +137,7 @@ A larger screen is built by combining smaller components with clear responsibili
 Props are values passed from a parent component to a child component.
 
 ```tsx
-<HomeScreen
-  scores={mockScores}
-  onCreateQuiz={handleOpenQuizConfiguration}
-/>
+<HomeScreen scores={mockScores} onCreateQuiz={handleOpenQuizConfiguration} />
 ```
 
 The data flows downward:
@@ -192,9 +189,7 @@ interface HeroSectionProps {
 The child calls the function when the user interacts with the UI:
 
 ```tsx
-<PrimaryButton onClick={onCreateQuiz}>
-  Create a quiz
-</PrimaryButton>
+<PrimaryButton onClick={onCreateQuiz}>Create a quiz</PrimaryButton>
 ```
 
 The child knows that the user requested quiz creation, but it does not need to know how the application changes screens.
@@ -208,8 +203,7 @@ This preserves separation of responsibilities.
 State is data owned by a component that can change over time and cause React to render again.
 
 ```tsx
-const [isQuizConfigurationOpen, setIsQuizConfigurationOpen] =
-  useState(false);
+const [isQuizConfigurationOpen, setIsQuizConfigurationOpen] = useState(false);
 ```
 
 The state value is initially `false`, so the home screen appears.
@@ -241,17 +235,19 @@ The UI reflects the new state
 React can select which interface to render based on state.
 
 ```tsx
-{isQuizConfigurationOpen ? (
-  <QuizConfigurationPanel
-    onClose={handleCloseQuizConfiguration}
-    onSubmit={handleQuizConfigurationSubmit}
-  />
-) : (
-  <HomeScreen
-    scores={mockScores}
-    onCreateQuiz={handleOpenQuizConfiguration}
-  />
-)}
+{
+  isQuizConfigurationOpen ? (
+    <QuizConfigurationPanel
+      onClose={handleCloseQuizConfiguration}
+      onSubmit={handleQuizConfigurationSubmit}
+    />
+  ) : (
+    <HomeScreen
+      scores={mockScores}
+      onCreateQuiz={handleOpenQuizConfiguration}
+    />
+  );
+}
 ```
 
 The ternary operator follows this structure:
@@ -273,10 +269,7 @@ const [studyContent, setStudyContent] = useState("");
 ```
 
 ```tsx
-<textarea
-  value={studyContent}
-  onChange={handleStudyContentChange}
-/>
+<textarea value={studyContent} onChange={handleStudyContentChange} />
 ```
 
 ```tsx
@@ -306,9 +299,7 @@ The textarea displays the updated state
 The form prevents the browser's default page reload:
 
 ```tsx
-function handleSubmit(
-  event: FormEvent<HTMLFormElement>,
-): void {
+function handleSubmit(event: FormEvent<HTMLFormElement>): void {
   event.preventDefault();
 
   onSubmit({
@@ -334,10 +325,7 @@ export interface QuizConfiguration {
 Difficulty is modeled as a finite set of allowed values:
 
 ```ts
-export type QuizDifficulty =
-  | "beginner"
-  | "intermediate"
-  | "advanced";
+export type QuizDifficulty = "beginner" | "intermediate" | "advanced";
 ```
 
 TypeScript rejects unsupported values such as:
@@ -386,19 +374,17 @@ This gives assistive technologies the context that all three options answer the 
 Difficulty options and score history are collections. React renders them with `map`.
 
 ```tsx
-{difficultyOptions.map((option) => (
-  <label key={option.value}>
-    {/* option content */}
-  </label>
-))}
+{
+  difficultyOptions.map((option) => (
+    <label key={option.value}>{/* option content */}</label>
+  ));
+}
 ```
 
 ```tsx
-{scores.map((score) => (
-  <li key={score.id}>
-    {score.quizTitle}
-  </li>
-))}
+{
+  scores.map((score) => <li key={score.id}>{score.quizTitle}</li>);
+}
 ```
 
 ### The purpose of `key`
@@ -472,9 +458,7 @@ export function calculateScorePercentage(
     return 0;
   }
 
-  return Math.round(
-    (score.correctAnswers / score.totalQuestions) * 100,
-  );
+  return Math.round((score.correctAnswers / score.totalQuestions) * 100);
 }
 ```
 
@@ -536,7 +520,7 @@ Later, `App` will obtain real scores from a storage abstraction or custom hook.
 The expected transition is:
 
 ```tsx
-scores={mockScores}
+scores = { mockScores };
 ```
 
 becoming something similar to:
@@ -544,10 +528,7 @@ becoming something similar to:
 ```tsx
 const { scores } = useQuizScores();
 
-<HomeScreen
-  scores={scores}
-  onCreateQuiz={handleOpenQuizConfiguration}
-/>
+<HomeScreen scores={scores} onCreateQuiz={handleOpenQuizConfiguration} />;
 ```
 
 `HomeScreen` and `ScoreBoard` should remain unchanged because they already depend on the score data, not its source.
@@ -643,7 +624,7 @@ Separating UI tests and business-rule tests keeps each test focused.
 The header component used:
 
 ```tsx
-className="app-header"
+className = "app-header";
 ```
 
 while the stylesheet initially defined:
