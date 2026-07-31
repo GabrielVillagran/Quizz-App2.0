@@ -1,167 +1,319 @@
-# ADR 0001: Use a React and Node.js Modular Monolith
+# ADR 0001 - Application Architecture
 
 - Status: Accepted
-- Date: 2026-07-23
+- Updated: July 2026
+- Decision owners: Quiz Learning Platform team
 
 ## Context
 
-Quiz Learning Platform requires a browser-based interface, an API for AI-generated quizzes, automated testing, and cloud deployment.
+The Quiz Learning Platform allows a learner to describe what they studied, choose a difficulty, complete a generated quiz, review explanations, and track personal scores.
 
-The frontend must provide an interactive quiz experience. The backend must protect AI provider credentials, validate generated responses, apply usage limits, and isolate the frontend from provider-specific implementation details.
+The first implementation established a React and TypeScript frontend with a complete local quiz engine. The next architecture step must support server-side quiz generation while keeping AI credentials private and preserving the tested frontend contract.
 
-The application is initially intended for a very small number of users. It does not currently require independent service scaling, distributed transactions, or multiple deployment teams.
-
-The project must also function as a professional React learning project without introducing unnecessary operational complexity.
+An earlier direction considered Node.js and NestJS for the backend. The project has now selected Java 21 and Spring Boot so the backend also serves as a structured learning path for enterprise Java, dependency injection, REST APIs, validation, testing, and AI-provider integration.
 
 ## Decision
 
-The application will use a modular monolith organized as an npm workspace.
+### Repository structure
 
-The main applications will be:
+The project will remain a monorepo:
 
 ```text
-apps/web
-apps/api
+quiz-learning-platform/
+|-- apps/
+|   |-- web/    React + TypeScript + Vite
+|   `-- api/    Java 21 + Spring Boot + Maven
+|-- docs/
+|-- packages/   Shared packages only when justified
+|-- .github/
+`-- package.json
 ```
 
-The web application will use:
+The npm workspace manages JavaScript and TypeScript packages. The Spring Boot application is managed independently with Maven and its Maven wrapper.
+
+### Frontend
+
+The web application uses:
 
 - React
 - TypeScript
 - Vite
+- Vitest
+- React Testing Library
+- Browser `localStorage` for personal score persistence in Version 1
 
-The API will later use:
+The frontend owns:
 
-- Node.js
-- NestJS
-- TypeScript
+- Quiz configuration UI
+- Active quiz-session interaction
+- Deterministic answer validation for the returned quiz contract
+- Result presentation
+- Personal score history in Version 1
 
-The applications will remain independently organized but will be maintained in one Git repository.
+The frontend must never contain OpenAI or other provider secrets.
 
-The React application will communicate with the API through HTTP.
+### Backend
 
-The frontend will not communicate directly with OpenAI or Ollama.
+The API application will use:
 
-The backend will expose an application-level quiz-generation operation and hide provider-specific details.
+- Java 21
+- Spring Boot
+- Maven
+- Spring Web
+- Jakarta Validation
+- Spring Boot Actuator
+- JUnit 5
+- Mockito
+- MockMvc
 
-Conceptually:
+The backend owns:
+
+- Quiz-generation HTTP endpoints
+- Request validation
+- Prompt construction
+- AI-provider credentials
+- Provider selection
+- AI-response validation and mapping
+- Error translation
+- Observability and health endpoints
+
+### Architectural style
+
+The backend will begin as a modular monolith, not a microservice system.
 
 ```text
-React Web Application
-        |
-        | HTTPS
-        v
-NestJS API
-        |
-        v
-Quiz Generator Boundary
-        |
-        +-- OpenAI implementation
-        |
-        +-- Ollama implementation
+React frontend
+      |
+      | HTTP / JSON
+      v
+Spring Boot API
+      |
+      v
+QuizGenerationService
+      |
+      v
+QuizGenerator
+  |-- FakeQuizGenerator
+  |-- OpenAiQuizGenerator
+  `-- OllamaQuizGenerator (later)
 ```
 
-The first deployed release will use OpenAI.
+A modular monolith provides clear boundaries without introducing distributed deployment, service discovery, network retries between internal modules, or duplicated operational infrastructure.
 
-A later release may introduce Ollama through a separate provider implementation.
+### REST contract
 
-## Rationale
+The primary future endpoint is:
 
-### React
+```text
+POST /api/quizzes/generate
+```
 
-React supports component-based interfaces and is directly relevant to the developer’s professional learning goals.
+Example request:
 
-### TypeScript
+```json
+{
+  "studyContent": "I studied SQL joins and grouping",
+  "difficulty": "intermediate",
+  "questionCount": 10
+}
+```
 
-TypeScript provides safer component APIs, domain modeling, refactoring support, and shared language across the frontend and backend.
+The response will match the frontend `Quiz` model and support:
 
-### Vite
+- `multiple-choice`
+- `true-false`
+- `short-answer`
 
-Vite provides a lightweight development server and production build process without requiring a full-stack React framework.
+Every question must include an explanation.
 
-### Node.js and NestJS
+### AI-provider boundary
 
-Node.js allows the entire application to use TypeScript.
+The backend will depend on an application-level interface rather than directly on one provider:
 
-NestJS provides modules, dependency injection, controllers, services, validation integration, and testing support for the API.
+```java
+public interface QuizGenerator {
+    Quiz generate(QuizGenerationRequest request);
+}
+```
 
-### Monorepo
+Initial and future implementations:
 
-A monorepo provides:
+```text
+FakeQuizGenerator   -> deterministic local development and tests
+OpenAiQuizGenerator -> Version 1 AI provider
+OllamaQuizGenerator -> optional local provider through Docker later
+```
 
-- One version-control history
-- One pull-request workflow
-- Shared quality commands
-- Easier coordination between frontend and backend
-- Simplified documentation
-- The possibility of sharing contracts later
+This boundary applies dependency inversion and keeps controllers and application services independent from provider-specific SDKs.
 
-### Modular monolith
+### Security
 
-A modular monolith provides clear boundaries without the operational cost of microservices.
+- AI API keys exist only in backend environment variables or secret management.
+- The frontend never calls OpenAI directly.
+- The backend validates all incoming requests.
+- AI responses are treated as untrusted input and validated before returning a quiz.
+- No authentication is required for Version 1.
+- Rate limiting, authentication, and multi-user score storage will be reconsidered when the product becomes publicly accessible or user accounts are introduced.
 
-Microservices would not currently provide enough value to justify:
+### Persistence
 
-- Multiple deployments
-- Service discovery
-- Distributed logging
-- Network failure handling
-- Cross-service versioning
-- Increased local-development complexity
+Version 1 has no backend database.
+
+Completed personal scores remain in browser `localStorage`.
+
+The backend is stateless for quiz generation. A database will be introduced only when product requirements require accounts, cross-device history, shared quizzes, analytics, or administrative content management.
+
+### Testing
+
+Frontend quality gates include:
+
+- Formatting
+- ESLint
+- TypeScript compilation
+- Vitest tests
+- Production build
+
+Backend quality gates will include:
+
+- Maven compilation
+- Unit tests
+- Controller tests with MockMvc
+- Validation tests
+- Application-context test
+- Package and startup verification
+
+AI-provider tests must use fakes or mocked HTTP boundaries. CI must not require a real OpenAI key.
+
+### Continuous integration
+
+GitHub Actions will validate both applications.
+
+```text
+Frontend job -> npm ci -> quality:web
+Backend job  -> ./mvnw verify
+```
+
+The jobs may run independently so failures are isolated and feedback remains fast.
+
+### Deployment
+
+The frontend and backend may be deployed independently while remaining in the same repository.
+
+The frontend receives the backend base URL through environment configuration. The backend receives provider keys and provider selection through server-side configuration.
+
+The initial deployment target may change without changing the domain architecture.
 
 ## Consequences
 
 ### Positive consequences
 
-- The first version can be delivered faster.
-- The frontend and backend remain clearly separated.
-- AI credentials remain on the server.
-- Testing and CI can be managed from one repository.
-- The AI provider can be changed later without redesigning React.
-- The architecture can grow incrementally.
+- The React frontend remains intact.
+- API credentials are protected on the server.
+- Java and Spring Boot provide a strong enterprise backend learning path.
+- The fake provider supports deterministic development before AI integration.
+- OpenAI and Ollama can share one application contract.
+- The modular monolith keeps operations simple.
+- No database is required for the first release.
+- Frontend and backend tests can run without external AI services.
 
 ### Negative consequences
 
-- The repository contains multiple applications.
-- Root scripts and workspace configuration require additional setup.
-- Deployment configuration must understand the monorepo structure.
-- Shared packages could become dumping grounds if boundaries are not maintained.
+- The repository uses two build ecosystems: npm and Maven.
+- TypeScript and Java models can drift unless the API contract is tested carefully.
+- Local development requires running two processes.
+- CORS or a Vite development proxy must be configured.
+- Provider response validation adds backend implementation work.
+- Browser score history is device-specific and can be cleared by the user.
 
-## Mitigations
+### Risks and mitigations
 
-- Shared packages will only be introduced when multiple applications genuinely need them.
-- The project will avoid creating interfaces without a concrete testing or substitution need.
-- Architecture will evolve after working functionality exposes real coupling.
-- Each phase will include refactoring only where it provides measurable clarity.
+#### Contract drift
 
-## Alternatives considered
+Risk: Java response models and TypeScript domain models become inconsistent.
 
-### React calling OpenAI directly
+Mitigation:
 
-Rejected because the browser would expose the OpenAI API key and provider implementation details.
+- Add controller contract tests.
+- Keep example JSON fixtures.
+- Consider OpenAPI generation after the initial endpoint stabilizes.
 
-### Separate frontend and backend repositories
+#### AI output instability
 
-Rejected for the initial release because it would add coordination and CI/CD overhead without a clear benefit.
+Risk: A model returns invalid JSON or incomplete questions.
 
-### Next.js full-stack application
+Mitigation:
 
-Not selected because the current learning goal emphasizes React with a separately understood Node.js backend.
+- Use structured output where available.
+- Validate every response.
+- Reject unsupported question types.
+- Require explanations.
+- Log provider failures without exposing secrets.
+
+#### Provider coupling
+
+Risk: Provider-specific logic leaks into controllers and domain models.
+
+Mitigation:
+
+- Keep provider code behind `QuizGenerator`.
+- Map provider responses into internal models.
+- Test application services with `FakeQuizGenerator`.
+
+#### Premature complexity
+
+Risk: Adding authentication, databases, queues, or microservices before they solve a real product need.
+
+Mitigation:
+
+- Keep Version 1 stateless on the backend.
+- Introduce infrastructure only through a new documented decision.
+
+## Rejected alternatives
+
+### Direct OpenAI calls from React
+
+Rejected because browser code cannot protect API credentials and would make provider cost controls difficult.
+
+### Node.js and NestJS backend
+
+Rejected as the current project direction because the team chose Java and Spring Boot for backend learning and enterprise architecture practice. The React contract does not depend on this choice.
+
+### Multiple backend implementations
+
+Running both NestJS and Spring Boot was rejected because it would duplicate controllers, models, tests, provider integration, deployment, and maintenance.
 
 ### Microservices
 
-Rejected because the application does not require independent service scaling or distributed ownership.
+Rejected because the product has one small backend capability and no current need for independently scaled or independently owned services.
 
 ### Database in Version 1
 
-Rejected because browser storage is sufficient for local score history and avoids unnecessary infrastructure.
+Rejected because the product has no authentication or cross-device score-history requirement. Browser persistence is sufficient for the initial release.
 
-## Review conditions
+## Implementation sequence
 
-This decision should be reviewed when:
+1. Create `apps/api` with Java 21, Spring Boot, Maven, and the Maven wrapper.
+2. Add a tested health endpoint.
+3. Define Java request and response DTOs matching the frontend quiz contract.
+4. Implement `QuizGenerator` and `FakeQuizGenerator`.
+5. Add `POST /api/quizzes/generate` with validation and controller tests.
+6. Connect the React configuration screen to the fake Spring Boot endpoint.
+7. Add frontend loading and error states.
+8. Implement `OpenAiQuizGenerator` behind the existing interface.
+9. Validate and map AI responses.
+10. Extend CI to run frontend and backend quality gates.
+11. Add Ollama as an optional provider later without changing controllers.
 
-- The application requires independent frontend and backend release cycles.
-- Multiple teams own different services.
-- Server-side score synchronization becomes necessary.
-- A database is introduced.
-- Ollama requires a deployment topology that changes the current backend design.
+## Review triggers
+
+Revisit this decision when the product requires any of the following:
+
+- User authentication
+- Cross-device score history
+- Shared or public quizzes
+- Real-time collaboration
+- Independent service scaling
+- Multiple backend teams
+- A persistent quiz catalog
+- Analytics that cannot remain client-side
+- Regulatory or enterprise security controls
