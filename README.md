@@ -225,3 +225,76 @@ The project is currently in:
 ```text
 Phase 0 — Product and Engineering Foundations
 ```
+
+## Backend API
+
+The backend is a Java 21 application built with Spring Boot and Maven. It is located in:
+
+```text
+apps/api
+```
+
+### Run locally
+
+On Windows:
+
+```cmd
+cd apps\api
+mvnw.cmd spring-boot:run
+```
+
+The API starts at:
+
+```text
+http://localhost:8080
+```
+
+### Health endpoint
+
+```http
+GET /api/health
+```
+
+Example response:
+
+```json
+{
+  "status": "UP",
+  "application": "quiz-learning-platform-api"
+}
+```
+
+You can verify it with:
+
+```cmd
+curl.exe http://localhost:8080/api/health
+```
+
+### Run backend tests
+
+From `apps/api`:
+
+```cmd
+mvnw.cmd clean test
+```
+
+The test suite includes:
+
+- A Spring application-context test
+- A focused MVC test for the health endpoint
+
+### Full project validation
+
+From the repository root:
+
+```cmd
+npm run quality:web
+```
+
+Then:
+
+```cmd
+cd apps\api
+mvnw.cmd --batch-mode clean test
+cd ..\..
+```

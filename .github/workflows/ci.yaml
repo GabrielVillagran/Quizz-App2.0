@@ -32,3 +32,26 @@ jobs:
 
       - name: Run web quality checks
         run: npm run quality:web
+
+  api-quality:
+    name: API Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: apps/api/pom.xml
+
+      - name: Make Maven Wrapper executable
+        run: chmod +x apps/api/mvnw
+
+      - name: Run API tests
+        working-directory: apps/api
+        run: ./mvnw --batch-mode test
